@@ -28,7 +28,7 @@
 //             }}
 //           /> */}
 
-{
+
   /* <AddressAutocomplete style={{width:500}}/>
         </div>
       </div>
@@ -37,7 +37,7 @@
 }
 
 export default CreateTrip; */
-}
+
 import React, { useEffect, useState } from "react";
 import AddressAutocomplete from "@rottitime/react-address-autocomplete";
 import { Input } from "@/components/ui/input";
@@ -138,30 +138,47 @@ function CreateTrip() {
   
     let cleanedTripData = TripData.trim();
   
-    // Try extracting JSON object from the string
+    // ✅ Check for clearly invalid responses (like "ny", "okay", etc.)
+    if (!cleanedTripData.includes("{") || cleanedTripData.length < 50) {
+      toast("Trip data could not be generated. Please try a different input.");
+      console.error("Invalid AI Response:", cleanedTripData);
+      setLoading(false);
+      return;
+    }
+  
+    // ✅ Try extracting JSON object from the AI response
     const match = cleanedTripData.match(/\{[\s\S]*\}/);
     if (match) {
-      cleanedTripData = match[0]; // Only JSON part
+      cleanedTripData = match[0]; // Extract only the JSON part
     }
   
     let parsedTripData;
     try {
       parsedTripData = JSON.parse(cleanedTripData);
     } catch (e) {
-      console.error("TripData is not valid JSON, storing as plain text instead:", TripData);
-      parsedTripData = TripData; // fallback: store it as a string
+      console.error("TripData is not valid JSON:", TripData);
+      toast("Received invalid trip plan from AI. Please try again.");
+      setLoading(false);
+      return;
     }
   
-    await setDoc(doc(db, "AiTravel", docId), {
-      UserSelection: formData,
-      tripData: parsedTripData,
-      userEmail: user?.email,
-      id: docId,
-    });
+    // ✅ Save the parsed trip data to Firestore
+    try {
+      await setDoc(doc(db, "AiTravel", docId), {
+        UserSelection: formData,
+        tripData: parsedTripData,
+        userEmail: user?.email,
+        id: docId,
+      });
+      navigate("/view-trip/" + docId);
+    } catch (error) {
+      console.error("Error saving to Firestore:", error);
+      toast("Failed to save trip. Please try again.");
+    }
   
     setLoading(false);
-    navigate("/view-trip/" + docId);
   };
+  
   
   
   const GetUserProfile = (tokeninfo) =>{
