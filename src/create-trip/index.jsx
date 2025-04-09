@@ -136,13 +136,12 @@ function CreateTrip() {
     const user = JSON.parse(localStorage.getItem("user"));
     const docId = Date.now().toString();
   
-    // Step 1: Clean TripData string before parsing
     let cleanedTripData = TripData.trim();
-    const firstBraceIndex = cleanedTripData.indexOf("{");
   
-    if (firstBraceIndex > 0) {
-      // Remove any unwanted characters before the first `{`
-      cleanedTripData = cleanedTripData.slice(firstBraceIndex);
+    // Try extracting JSON object from the string
+    const match = cleanedTripData.match(/\{[\s\S]*\}/);
+    if (match) {
+      cleanedTripData = match[0]; // Only JSON part
     }
   
     let parsedTripData;
@@ -153,7 +152,6 @@ function CreateTrip() {
       parsedTripData = TripData; // fallback: store it as a string
     }
   
-    // Step 2: Store in Firestore
     await setDoc(doc(db, "AiTravel", docId), {
       UserSelection: formData,
       tripData: parsedTripData,
@@ -165,6 +163,7 @@ function CreateTrip() {
     navigate("/view-trip/" + docId);
   };
   
+  
   const GetUserProfile = (tokeninfo) =>{
     axios.get(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${tokeninfo?.access_token}`,{
       headers:{
@@ -172,7 +171,7 @@ function CreateTrip() {
         Accept:'Application/json'
       }
     }).then((res) =>{
-      console.log("res",res.data);
+      console.log("res",res);
       localStorage.setItem('user',JSON.stringify(res.data));
       setOpenDialog(false);
       OnGenerateTrip();

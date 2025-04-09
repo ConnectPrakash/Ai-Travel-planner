@@ -12,11 +12,12 @@ function PlaceCardItem({place}) {
       <img
   src={place.placeImageUrl}
   alt={place.placeName}
+  className='w-[130px] h-[130px] rounded-xl'
   onError={(e) => {
     // Try fallback search or replace with default
     e.target.src = `https://source.unsplash.com/400x300/?${place.placeName}`;
   }}
-  className="rounded-lg object-cover"
+
 />
 
       <div>
